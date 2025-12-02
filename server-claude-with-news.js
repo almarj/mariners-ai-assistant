@@ -83,7 +83,7 @@ app.get("/health", (req, res) => {
 });
 
 app.listen(port, '0.0.0.0', () => {
-  console.log(`✅ Server running at http://localhost:${port}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`AI Provider: Claude (Anthropic)`);
+    console.log(`✅ Server running on port ${port}`);
+    console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+    console.log(`AI Provider: Claude (Anthropic)`);
 });
