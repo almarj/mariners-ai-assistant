@@ -1,0 +1,35 @@
+{
+  "name": "mariners-ai-assistant-claude",
+  "version": "1.0.0",
+  "description": "Seattle Mariners AI Assistant - Stats and Claude AI-powered Q&A",
+  "main": "server-claude-with-news.js",
+  "scripts": {
+    "start": "node server-claude-with-news.js",
+    "dev": "nodemon server-claude-with-news.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "mariners",
+    "baseball",
+    "mlb",
+    "ai",
+    "claude",
+    "anthropic",
+    "seattle"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "node-fetch": "^3.3.0"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.1"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

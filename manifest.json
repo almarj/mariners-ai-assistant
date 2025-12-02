@@ -1,0 +1,20 @@
+{
+  "name": "Mariners AI Assistant",
+  "short_name": "Mariners AI",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0C2C56",
+  "theme_color": "#005C5C",
+  "icons": [
+    {
+      "src": "images/mariners-logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/mariners-logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

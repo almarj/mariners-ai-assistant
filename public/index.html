@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mariners AI Assistant</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="manifest" href="manifest.json" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      padding: 20px; 
+      max-width: 1000px; 
+      margin: auto; 
+      background: linear-gradient(135deg, #0C2C56 0%, #005C5C 100%);
+      color: #ffffff; 
+      min-height: 100vh;
+    }
+    
+    h1 { 
+      color: #C4CED4; 
+      text-align: center; 
+      margin-bottom: 10px;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+    
+    input, button, textarea { 
+      font-size: 1rem; 
+      padding: 12px; 
+      margin-top: 10px; 
+      width: 100%; 
+      box-sizing: border-box;
+      border-radius: 6px;
+      border: 1px solid #005C5C;
+    }
+    
+    input, textarea {
+      background-color: rgba(255, 255, 255, 0.95);
+      color: #0C2C56;
+    }
+    
+    button { 
+      background-color: #005C5C; 
+      color: #ffffff; 
+      border: none; 
+      font-weight: bold; 
+      cursor: pointer; 
+      transition: background-color 0.2s;
+      margin-right: 10px;
+    }
+    
+    button:hover { 
+      background-color: #003d3d; 
+    }
+    
+    button:disabled {
+      background-color: #666;
+      cursor: not-allowed;
+    }
+    
+    h2 { 
+      margin-top: 2rem; 
+      border-bottom: 2px solid #005C5C; 
+      padding-bottom: 4px; 
+      color: #C4CED4;
+    }
+    
+    .section { 
+      display: none; 
+      margin-bottom: 2rem; 
+      animation: fadeIn 0.3s;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    
+    .active { 
+      display: block; 
+    }
+    
+    .nav { 
+      text-align: center; 
+      margin-bottom: 20px; 
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    
+    .nav button {
+      width: auto;
+      min-width: 100px;
+      margin: 0;
+      font-size: 0.9rem;
+    }
+    
+    .logo { 
+      width: 60px; 
+      display: block; 
+      margin: 0 auto 10px; 
+      filter: drop-shadow(0 0 10px rgba(196, 206, 212, 0.5));
+    }
+    
+    .subtitle {
+      text-align: center;
+      color: #8AB8E6;
+      font-size: 0.9rem;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+    
+    .styled-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+      background-color: rgba(255, 255, 255, 0.95);
+      font-size: 0.95rem;
+      border: 1px solid #005C5C;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      color: #0C2C56;
+    }
+    
+    .styled-table th, .styled-table td {
+      padding: 12px;
+      border: 1px solid #C4CED4;
+      text-align: center;
+    }
+    
+    .styled-table thead {
+      background-color: #005C5C;
+      font-weight: bold;
+      color: #ffffff;
+    }
+    
+    .styled-table tr:nth-child(even) {
+      background-color: rgba(196, 206, 212, 0.2);
+    }
+    
+    .styled-table tr:hover {
+      background-color: rgba(138, 184, 230, 0.3);
+    }
+    
+    .highlight {
+      font-weight: bold;
+      background-color: rgba(0, 92, 92, 0.3) !important;
+    }
+    
+    #response {
+      margin-top: 20px;
+      padding: 15px;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 6px;
+      border: 1px solid #005C5C;
+      min-height: 50px;
+      white-space: pre-wrap;
+      line-height: 1.6;
+      color: #0C2C56;
+    }
+    
+    .loading {
+      color: #005C5C;
+      font-style: italic;
+    }
+    
+    .error {
+      color: #d32f2f;
+      background-color: #ffebee;
+      padding: 15px;
+      border-radius: 6px;
+      border: 1px solid #ef5350;
+    }
+    
+    .game-item {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #005C5C;
+      color: #0C2C56;
+    }
+    
+    .game-item:hover {
+      background-color: rgba(138, 184, 230, 0.3);
+    }
+    
+    /* News styles */
+    .news-item {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 15px;
+      margin: 12px 0;
+      border-radius: 6px;
+      border: 1px solid #005C5C;
+      transition: transform 0.2s, box-shadow 0.2s;
+      color: #0C2C56;
+    }
+    
+    .news-item:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 92, 92, 0.4);
+    }
+    
+    .news-item h3 {
+      color: #0C2C56;
+      margin-bottom: 8px;
+      font-size: 1.1rem;
+    }
+    
+    .news-item p {
+      color: #333;
+      margin-bottom: 10px;
+      line-height: 1.5;
+    }
+    
+    .news-item a {
+      color: #005C5C;
+      text-decoration: none;
+      font-weight: 500;
+    }
+    
+    .news-item a:hover {
+      text-decoration: underline;
+    }
+    
+    .news-meta {
+      font-size: 0.85rem;
+      color: #666;
+      margin-top: 8px;
+    }
+    
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      
+      .nav button {
+        min-width: 70px;
+        font-size: 0.8rem;
+        padding: 8px;
+      }
+      
+      .styled-table {
+        font-size: 0.85rem;
+      }
+      
+      .styled-table th, .styled-table td {
+        padding: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div style="text-align: center; font-size: 3rem; margin-bottom: 10px;">⚓</div>
+  <h1>Mariners AI Assistant</h1>
+  <p class="subtitle">T-MOBILE PARK • SEATTLE, WA</p>
+
+  <div class="nav">
+    <button onclick="showSection('ai')">Ask AI</button>
+    <button onclick="showSection('news')">News</button>
+    <button onclick="showSection('games')">Games</button>
+    <button onclick="showSection('standings')">Standings</button>
+    <button onclick="showSection('players')">Stats</button>
+  </div>
+
+  <div id="ai" class="section active">
+    <input id="question" type="text" placeholder="Ask me anything about the Mariners..." />
+    <button onclick="ask()">Ask</button>
+    <div id="response"></div>
+  </div>
+
+  <div id="news" class="section">
+    <h2>Latest Mariners News</h2>
+    <div id="newsContent"></div>
+  </div>
+
+  <div id="games" class="section">
+    <h2>Last 5 Games</h2>
+    <div id="last5"></div>
+    <h2>Next 5 Games</h2>
+    <div id="next5"></div>
+  </div>
+
+  <div id="standings" class="section">
+    <h2>AL West Standings</h2>
+    <div id="standingsDiv"></div>
+  </div>
+
+  <div id="players" class="section">
+    <h2>Hitting Stats</h2>
+    <div id="hitters"></div>
+    <h2>Pitching Stats</h2>
+    <div id="pitchers"></div>
+  </div>
+
+  <script>
+    // Configuration - use environment variable or default to localhost for development
+    const backendUrl = window.BACKEND_URL || "http://localhost:3002";
+    
+    console.log("Backend URL:", backendUrl);
+
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+
+      if (id === "players") loadPlayers();
+      if (id === "games") loadGames();
+      if (id === "standings") loadStandings();
+      if (id === "news") loadNews();
+    }
+
+    async function ask() {
+      const question = document.getElementById("question").value.trim();
+      const responseDiv = document.getElementById("response");
+      
+      if (!question) {
+        responseDiv.textContent = "Please enter a question.";
+        responseDiv.className = "error";
+        return;
+      }
+      
+      responseDiv.textContent = "Loading...";
+      responseDiv.className = "loading";
+
+      try {
+        const res = await fetch(`${backendUrl}/ask`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question })
+        });
+        
+        if (!res.ok) {
+          throw new Error(`Server error: ${res.status}`);
+        }
+        
+        const data = await res.json();
+        responseDiv.textContent = data.answer || "No response.";
+        responseDiv.className = "";
+      } catch (err) {
+        console.error("Error asking AI:", err);
+        responseDiv.textContent = `Failed to get response: ${err.message}`;
+        responseDiv.className = "error";
+      }
+    }
+    
+    // Allow Enter key to submit question
+    document.getElementById("question").addEventListener("keypress", function(e) {
+      if (e.key === "Enter") {
+        ask();
+      }
+    });
+
+    async function loadNews() {
+      try {
+        const data = await fetch(`${backendUrl}/news`).then(res => res.json());
+
+        const newsHtml = data.news.map(item => `
+          <div class="news-item">
+            <h3>${item.title}</h3>
+            <p>${item.description}</p>
+            <a href="${item.link}" target="_blank" rel="noopener noreferrer">Read more →</a>
+            <div class="news-meta">
+              Source: ${item.source} • ${new Date(item.date).toLocaleDateString()}
+            </div>
+          </div>
+        `).join("");
+
+        document.getElementById("newsContent").innerHTML = newsHtml || "<p>No news available.</p>";
+      } catch (err) {
+        console.error("Error loading news:", err);
+        document.getElementById("newsContent").innerHTML = `<p class="error">Error loading news: ${err.message}</p>`;
+      }
+    }
+
+    async function loadGames() {
+      try {
+        const last = await fetch(`${backendUrl}/last5`).then(res => res.json());
+        const next = await fetch(`${backendUrl}/next5`).then(res => res.json());
+
+        const last5Html = last.games.map(g => `
+          <div class="game-item">
+            <strong>${g.awayTeam}</strong> @ <strong>${g.homeTeam}</strong><br>
+            Final: ${g.awayScore}-${g.homeScore}
+          </div>
+        `).join("");
+
+        const next5Html = next.games.map(g => `
+          <div class="game-item">
+            <strong>${g.awayTeam}</strong> @ <strong>${g.homeTeam}</strong><br>
+            ${new Date(g.gameDate).toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric',
+              hour: 'numeric',
+              minute: '2-digit'
+            })}
+          </div>
+        `).join("");
+
+        document.getElementById("last5").innerHTML = last5Html || "<p>No recent games found.</p>";
+        document.getElementById("next5").innerHTML = next5Html || "<p>No upcoming games found.</p>";
+      } catch (err) {
+        console.error("Error loading games:", err);
+        document.getElementById("last5").innerHTML = `<p class="error">Error loading games: ${err.message}</p>`;
+        document.getElementById("next5").innerHTML = `<p class="error">Error loading games: ${err.message}</p>`;
+      }
+    }
+
+    async function loadStandings() {
+      try {
+        const data = await fetch(`${backendUrl}/standings`).then(res => res.json());
+
+        const alWestHtml = `
+          <h3>Division Standings</h3>
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>W-L</th>
+                <th>GB</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.alWest.map(t => `
+                <tr class="${t.teamName === 'Seattle Mariners' ? 'highlight' : ''}">
+                  <td>${t.teamName}</td>
+                  <td>${t.wins}-${t.losses}</td>
+                  <td>${t.gamesBack}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        `;
+
+        const wcHtml = `
+          <h3>AL Wild Card</h3>
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Team</th>
+                <th>W-L</th>
+                <th>Pct</th>
+                <th>GB</th>
+                <th>WC Rank</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${data.alWildCard.map(t => `
+                <tr class="${t.teamName === 'Seattle Mariners' ? 'highlight' : ''}">
+                  <td>${t.teamName}</td>
+                  <td>${t.wins}-${t.losses}</td>
+                  <td>${t.pct}</td>
+                  <td>${t.wildCardGamesBack}</td>
+                  <td>${t.wildCardRank}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+        `;
+
+        document.getElementById("standingsDiv").innerHTML = alWestHtml + wcHtml;
+      } catch (err) {
+        console.error("Error loading standings:", err);
+        document.getElementById("standingsDiv").innerHTML = `<p class="error">Error loading standings: ${err.message}</p>`;
+      }
+    }
+
+    async function loadPlayers() {
+      try {
+        const data = await fetch(`${backendUrl}/players`).then(res => res.json());
+        const hitters = data.players.filter(p => p.type !== "Pitcher");
+        const pitchers = data.players.filter(p => p.type === "Pitcher");
+
+        const hitterTable = `
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>AVG</th>
+                <th>Runs</th>
+                <th>HR</th>
+                <th>RBI</th>
+                <th>SB</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${hitters.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.avg}</td>
+                  <td>${p.runs}</td>
+                  <td>${p.hr}</td>
+                  <td>${p.rbi}</td>
+                  <td>${p.sb}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>`;
+
+        const pitcherTable = `
+          <table class="styled-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Wins</th>
+                <th>Losses</th>
+                <th>ERA</th>
+                <th>WHIP</th>
+                <th>K</th>
+                <th>Saves</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pitchers.map(p => `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${p.wins}</td>
+                  <td>${p.losses}</td>
+                  <td>${p.era}</td>
+                  <td>${p.whip}</td>
+                  <td>${p.strikeouts}</td>
+                  <td>${p.saves}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>`;
+
+        document.getElementById("hitters").innerHTML = hitterTable;
+        document.getElementById("pitchers").innerHTML = pitcherTable;
+
+      } catch (err) {
+        console.error("Error loading players:", err);
+        document.getElementById("hitters").innerHTML = `<p class="error">Error loading hitters: ${err.message}</p>`;
+        document.getElementById("pitchers").innerHTML = `<p class="error">Error loading pitchers: ${err.message}</p>`;
+      }
+    }
+
+    // Load initial data
+    loadGames();
+    loadStandings();
+  </script>
+</body>
+</html>
