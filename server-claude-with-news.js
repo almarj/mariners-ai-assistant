@@ -73,6 +73,28 @@ app.get("/news", async (req, res) => {
   }
 });
 
+// NEW: Playoff games endpoint
+app.get("/playoff-games", async (req, res) => {
+  try {
+    const data = await dataService.getPlayoffGames();
+    res.json(data);
+  } catch (err) {
+    console.error("Error in /playoff-games:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// NEW: Playoff standings endpoint
+app.get("/playoff-standings", async (req, res) => {
+  try {
+    const data = await dataService.getPlayoffStandings();
+    res.json(data);
+  } catch (err) {
+    console.error("Error in /playoff-standings:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Health check endpoint
 app.get("/health", (req, res) => {
   res.json({ 

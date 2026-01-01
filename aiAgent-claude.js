@@ -20,8 +20,38 @@ router.post("/", async (req, res) => {
   }
 
   try {
-    // Use dataService to get current Mariners data
-    const { standings, players, last5, next5 } = await dataService.getMarinersData();
+    // Use dataService to get current Mariners data (now includes playoff data)
+    const { standings, players, last5, next5, playoff } = await dataService.getMarinersData();
+
+    // Build playoff context if playoff games exist
+    let playoffContext = '';
+    if (playoff && playoff.games && playoff.games.length > 0) {
+      playoffContext = `
+2025 PLAYOFF GAMES:
+${playoff.games.map(g => {
+  const mariners = g.homeTeam.includes('Mariners') ? 'home' : 'away';
+  const marinersScore = mariners === 'home' ? g.homeScore : g.awayScore;
+  const opponentScore = mariners === 'home' ? g.awayScore : g.homeScore;
+  const result = marinersScore > opponentScore ? 'W' : 'L';
+  return `${g.seriesDescription} Game ${g.seriesGameNumber}: ${g.awayTeam} @ ${g.homeTeam} - ${result} ${g.awayScore}-${g.homeScore}`;
+}).join("\n")}
+
+PLAYOFF PLAYER STATS:
+Top Playoff Hitters:
+${players.players
+  .filter(p => p.type !== "Pitcher" && p.playoff && p.playoff.gp && parseInt(p.playoff.gp) > 0)
+  .slice(0, 5)
+  .map(p => `${p.name}: ${p.playoff.gp} GP, AVG ${p.playoff.avg}, HR ${p.playoff.hr}, RBI ${p.playoff.rbi}`)
+  .join("\n") || "No playoff hitting stats available"}
+
+Top Playoff Pitchers:
+${players.players
+  .filter(p => p.type === "Pitcher" && p.playoff && p.playoff.gp && parseInt(p.playoff.gp) > 0)
+  .slice(0, 5)
+  .map(p => `${p.name}: ${p.playoff.gp} GP, W ${p.playoff.wins}, L ${p.playoff.losses}, ERA ${p.playoff.era}, K ${p.playoff.strikeouts}`)
+  .join("\n") || "No playoff pitching stats available"}
+`;
+    }
 
     const context = `
 You are a knowledgeable Seattle Mariners assistant. Answer questions about the team using the following current data:
@@ -37,15 +67,15 @@ ${last5.games.map(g => `${g.awayTeam} @ ${g.homeTeam} - Final: ${g.awayScore}-${
 
 UPCOMING GAMES (Next 5):
 ${next5.games.map(g => `${g.awayTeam} @ ${g.homeTeam} on ${new Date(g.gameDate).toLocaleDateString()}`).join("\n")}
-
-TOP HITTERS:
+${playoffContext}
+TOP HITTERS (Regular Season):
 ${players.players
   .filter(p => p.type !== "Pitcher")
   .slice(0, 10)
   .map(p => `${p.name}: AVG ${p.avg}, HR ${p.hr}, RBI ${p.rbi}, SB ${p.sb}, Runs ${p.runs}`)
   .join("\n")}
 
-TOP PITCHERS:
+TOP PITCHERS (Regular Season):
 ${players.players
   .filter(p => p.type === "Pitcher")
   .slice(0, 10)
@@ -54,7 +84,7 @@ ${players.players
 
 User Question: ${userQuestion}
 
-Please answer the question accurately using only the provided data. Be conversational and enthusiastic about the Mariners. If asked about something not in the data, politely explain you don't have that information.
+Please answer the question accurately using only the provided data. Be conversational and enthusiastic about the Mariners. If asked about playoff performance, use the playoff data above. If comparing regular season vs playoff performance, use both datasets. If asked about something not in the data, politely explain you don't have that information.
 `;
 
     // Call Claude API

@@ -70,6 +70,12 @@
       color: #C4CED4;
     }
     
+    h3 {
+      margin-top: 1.5rem;
+      color: #C4CED4;
+      font-size: 1.1rem;
+    }
+    
     .section { 
       display: none; 
       margin-bottom: 2rem; 
@@ -190,6 +196,40 @@
       background-color: rgba(138, 184, 230, 0.3);
     }
     
+    /* Playoff game styling - matches game-item but with colored left border */
+    .playoff-game-item {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 12px;
+      margin: 8px 0;
+      border-radius: 6px;
+      border: 1px solid #005C5C;
+      border-left: 4px solid #005C5C;
+      color: #0C2C56;
+    }
+    
+    .playoff-game-item:hover {
+      background-color: rgba(138, 184, 230, 0.3);
+    }
+    
+    .playoff-game-item.win {
+      border-left-color: #4CAF50;
+    }
+    
+    .playoff-game-item.loss {
+      border-left-color: #ef5350;
+    }
+    
+    .playoff-badge {
+      display: inline-block;
+      background-color: #FFD700;
+      color: #0C2C56;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.85rem;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+    
     /* News styles */
     .news-item {
       background: rgba(255, 255, 255, 0.95);
@@ -234,6 +274,35 @@
       margin-top: 8px;
     }
     
+    /* Stats view toggle - minimal style matching your nav buttons */
+    .stats-view-toggle {
+      margin: 15px 0;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    .stats-view-toggle button {
+      width: auto;
+      min-width: 120px;
+      padding: 10px 20px;
+      margin: 0;
+      font-size: 0.9rem;
+      background-color: #005C5C;
+    }
+    
+    .stats-view-toggle button.active {
+      background-color: #003d3d;
+    }
+    
+    .no-data-message {
+      text-align: center;
+      padding: 30px;
+      color: #C4CED4;
+      font-style: italic;
+    }
+    
     @media (max-width: 600px) {
       body {
         padding: 10px;
@@ -252,6 +321,11 @@
       .styled-table th, .styled-table td {
         padding: 8px;
       }
+      
+      .stats-view-toggle button {
+        min-width: 90px;
+        font-size: 0.85rem;
+      }
     }
   </style>
 </head>
@@ -264,6 +338,7 @@
     <button onclick="showSection('ai')">Ask AI</button>
     <button onclick="showSection('news')">News</button>
     <button onclick="showSection('games')">Games</button>
+    <button onclick="showSection('playoffs')">Playoffs</button>
     <button onclick="showSection('standings')">Standings</button>
     <button onclick="showSection('players')">Stats</button>
   </div>
@@ -286,6 +361,22 @@
     <div id="next5"></div>
   </div>
 
+  <!-- NEW PLAYOFF SECTION - Styled to match existing sections -->
+  <div id="playoffs" class="section">
+    <h2>2025 Playoff Games</h2>
+    <div id="playoffGames"></div>
+    
+    <h2>Playoff Stats</h2>
+    <div class="stats-view-toggle">
+      <button class="active" onclick="changeStatsView('playoff', event)">Playoff</button>
+      <button onclick="changeStatsView('regular', event)">Regular Season</button>
+      <button onclick="changeStatsView('compare', event)">Compare</button>
+    </div>
+    
+    <div id="playoffHitters"></div>
+    <div id="playoffPitchers"></div>
+  </div>
+
   <div id="standings" class="section">
     <h2>AL West Standings</h2>
     <div id="standingsDiv"></div>
@@ -299,10 +390,16 @@
   </div>
 
   <script>
-    // Configuration - use environment variable or default to localhost for development
-    const backendUrl = "https://mariners-ai-assistant-production-production.up.railway.app";
+    // Configuration - automatically detect if running locally or in production
+    const backendUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+      ? `http://localhost:3002`
+      : "https://mariners-ai-assistant-production-production.up.railway.app";
     
     console.log("Backend URL:", backendUrl);
+    console.log("Running in:", window.location.hostname === 'localhost' ? 'DEVELOPMENT' : 'PRODUCTION');
+    
+    let allPlayersData = [];
+    let currentStatsView = 'playoff';
 
     function showSection(id) {
       document.querySelectorAll('.section').forEach(div => div.classList.remove('active'));
@@ -312,6 +409,7 @@
       if (id === "games") loadGames();
       if (id === "standings") loadStandings();
       if (id === "news") loadNews();
+      if (id === "playoffs") loadPlayoffs();
     }
 
     async function ask() {
@@ -409,6 +507,237 @@
         document.getElementById("last5").innerHTML = `<p class="error">Error loading games: ${err.message}</p>`;
         document.getElementById("next5").innerHTML = `<p class="error">Error loading games: ${err.message}</p>`;
       }
+    }
+
+    // NEW: Load playoff section
+    async function loadPlayoffs() {
+      try {
+        // Load playoff games
+        const gamesData = await fetch(`${backendUrl}/playoff-games`).then(res => res.json());
+        const gamesContainer = document.getElementById("playoffGames");
+        
+        if (!gamesData.games || gamesData.games.length === 0) {
+          gamesContainer.innerHTML = '<div class="no-data-message">No playoff games found for the 2025 season.</div>';
+        } else {
+          const gamesHtml = gamesData.games.map(game => {
+            const mariners = game.homeTeam.includes('Mariners') ? 'home' : 'away';
+            const marinersScore = mariners === 'home' ? game.homeScore : game.awayScore;
+            const opponentScore = mariners === 'home' ? game.awayScore : game.homeScore;
+            
+            let gameClass = '';
+            if (game.status === 'Final') {
+              gameClass = marinersScore > opponentScore ? 'win' : 'loss';
+            }
+            
+            return `
+              <div class="playoff-game-item ${gameClass}">
+                <span class="playoff-badge">${game.seriesDescription || 'Playoffs'}</span>
+                <span style="color: #666; font-size: 0.9rem;">Game ${game.seriesGameNumber} of ${game.gamesInSeries}</span>
+                <br>
+                <strong>${game.awayTeam}</strong> @ <strong>${game.homeTeam}</strong><br>
+                ${game.status === 'Final' ? 
+                  `Final: ${game.awayScore}-${game.homeScore}` : 
+                  `${new Date(game.gameDate).toLocaleDateString('en-US', { 
+                    weekday: 'short', 
+                    month: 'short', 
+                    day: 'numeric'
+                  })}`
+                }
+              </div>
+            `;
+          }).join("");
+          
+          gamesContainer.innerHTML = gamesHtml;
+        }
+        
+        // Load playoff stats
+        const playersData = await fetch(`${backendUrl}/players`).then(res => res.json());
+        allPlayersData = playersData.players;
+        renderPlayoffStats();
+        
+      } catch (err) {
+        console.error("Error loading playoffs:", err);
+        document.getElementById("playoffGames").innerHTML = `<p class="error">Error loading playoff data: ${err.message}</p>`;
+      }
+    }
+    
+    // NEW: Change stats view
+    function changeStatsView(view, event) {
+      currentStatsView = view;
+      
+      // Update button states
+      document.querySelectorAll('.stats-view-toggle button').forEach(btn => {
+        btn.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      renderPlayoffStats();
+    }
+    
+    // NEW: Render playoff stats
+    function renderPlayoffStats() {
+      const playoffPlayers = allPlayersData.filter(p => 
+        p.playoff && p.playoff.gp && p.playoff.gp !== '-' && parseInt(p.playoff.gp) > 0
+      );
+      
+      if (playoffPlayers.length === 0 && currentStatsView !== 'regular') {
+        document.getElementById("playoffHitters").innerHTML = '<div class="no-data-message">No playoff statistics available.</div>';
+        document.getElementById("playoffPitchers").innerHTML = '';
+        return;
+      }
+      
+      const hitters = playoffPlayers.filter(p => p.type !== "Pitcher");
+      const pitchers = playoffPlayers.filter(p => p.type === "Pitcher");
+      
+      if (currentStatsView === 'compare') {
+        renderCompareView(hitters, pitchers);
+      } else {
+        renderSingleView(hitters, pitchers);
+      }
+    }
+    
+    // NEW: Render single view (playoff or regular)
+    function renderSingleView(hitters, pitchers) {
+      const usePlayoff = currentStatsView === 'playoff';
+      
+      const hitterTable = hitters.length > 0 ? `
+        <h3>${usePlayoff ? 'Playoff' : 'Regular Season'} Hitting</h3>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>GP</th>
+              <th>AVG</th>
+              <th>Runs</th>
+              <th>HR</th>
+              <th>RBI</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${hitters.map(p => {
+              const stat = usePlayoff ? p.playoff : p;
+              return `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${stat.gp || '-'}</td>
+                  <td>${stat.avg || '-'}</td>
+                  <td>${stat.runs || '-'}</td>
+                  <td>${stat.hr || '-'}</td>
+                  <td>${stat.rbi || '-'}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      ` : '';
+      
+      const pitcherTable = pitchers.length > 0 ? `
+        <h3>${usePlayoff ? 'Playoff' : 'Regular Season'} Pitching</h3>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>GP</th>
+              <th>W-L</th>
+              <th>ERA</th>
+              <th>WHIP</th>
+              <th>K</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pitchers.map(p => {
+              const stat = usePlayoff ? p.playoff : p;
+              return `
+                <tr>
+                  <td>${p.name}</td>
+                  <td>${stat.gp || '-'}</td>
+                  <td>${stat.wins || '-'}-${stat.losses || '-'}</td>
+                  <td>${stat.era || '-'}</td>
+                  <td>${stat.whip || '-'}</td>
+                  <td>${stat.strikeouts || '-'}</td>
+                </tr>
+              `;
+            }).join("")}
+          </tbody>
+        </table>
+      ` : '';
+      
+      document.getElementById("playoffHitters").innerHTML = hitterTable;
+      document.getElementById("playoffPitchers").innerHTML = pitcherTable;
+    }
+    
+    // NEW: Render comparison view
+    function renderCompareView(hitters, pitchers) {
+      const hitterTable = hitters.length > 0 ? `
+        <h3>Hitting Comparison</h3>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th rowspan="2">Name</th>
+              <th colspan="3">Regular Season</th>
+              <th colspan="3">Playoffs</th>
+            </tr>
+            <tr>
+              <th>AVG</th>
+              <th>HR</th>
+              <th>RBI</th>
+              <th>AVG</th>
+              <th>HR</th>
+              <th>RBI</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${hitters.map(p => `
+              <tr>
+                <td><strong>${p.name}</strong></td>
+                <td>${p.avg || '-'}</td>
+                <td>${p.hr || '-'}</td>
+                <td>${p.rbi || '-'}</td>
+                <td>${p.playoff.avg || '-'}</td>
+                <td>${p.playoff.hr || '-'}</td>
+                <td>${p.playoff.rbi || '-'}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : '';
+      
+      const pitcherTable = pitchers.length > 0 ? `
+        <h3>Pitching Comparison</h3>
+        <table class="styled-table">
+          <thead>
+            <tr>
+              <th rowspan="2">Name</th>
+              <th colspan="3">Regular Season</th>
+              <th colspan="3">Playoffs</th>
+            </tr>
+            <tr>
+              <th>W-L</th>
+              <th>ERA</th>
+              <th>K</th>
+              <th>W-L</th>
+              <th>ERA</th>
+              <th>K</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pitchers.map(p => `
+              <tr>
+                <td><strong>${p.name}</strong></td>
+                <td>${p.wins || '-'}-${p.losses || '-'}</td>
+                <td>${p.era || '-'}</td>
+                <td>${p.strikeouts || '-'}</td>
+                <td>${p.playoff.wins || '-'}-${p.playoff.losses || '-'}</td>
+                <td>${p.playoff.era || '-'}</td>
+                <td>${p.playoff.strikeouts || '-'}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+      ` : '';
+      
+      document.getElementById("playoffHitters").innerHTML = hitterTable;
+      document.getElementById("playoffPitchers").innerHTML = pitcherTable;
     }
 
     async function loadStandings() {
