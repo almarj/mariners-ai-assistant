@@ -2,6 +2,12 @@
 
 An interactive web application for Seattle Mariners fans featuring real-time stats, game schedules, standings, and an AI-powered assistant using Claude (Anthropic).
 
+## 🌐 Live App
+
+**Visit:** https://mariners-ai-assistant-production-production.up.railway.app
+
+Access from any device - desktop, tablet, or mobile!
+
 ## Features
 
 - 🤖 **AI Assistant**: Ask questions about the Mariners using Claude AI
